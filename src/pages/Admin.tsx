@@ -16,6 +16,8 @@ interface User {
   balance: number;
   referral_count: number;
   created_at: string;
+  referral_code?: string;
+  referred_by_name?: string;
 }
 
 const ADMIN_API_URL = 'https://functions.poehali.dev/a1318b50-a7e4-499c-88fb-61f55d06ff82';
@@ -280,6 +282,7 @@ export default function Admin() {
                       <TableHead>ID</TableHead>
                       <TableHead>Имя</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Пришел от</TableHead>
                       <TableHead className="text-right">Баланс</TableHead>
                       <TableHead className="text-right">Рефералы</TableHead>
                       <TableHead className="text-right">Действия</TableHead>
@@ -289,8 +292,24 @@ export default function Admin() {
                     {users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.id}</TableCell>
-                        <TableCell>{user.full_name}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{user.full_name}</p>
+                            {user.referral_code && (
+                              <p className="text-xs text-muted-foreground">{user.referral_code}</p>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          {user.referred_by_name ? (
+                            <span className="text-sm bg-secondary/20 px-2 py-1 rounded">
+                              {user.referred_by_name}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right font-semibold">
                           {user.balance.toFixed(2)} ₽
                         </TableCell>

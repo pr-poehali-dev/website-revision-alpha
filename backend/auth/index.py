@@ -46,6 +46,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             email = body_data.get('email')
             password = body_data.get('password')
             full_name = body_data.get('full_name')
+            referrer_code = body_data.get('referrer_code')
             
             if not email or not password or not full_name:
                 return {
@@ -68,9 +69,19 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'body': json.dumps({'error': 'Email уже зарегистрирован'})
                     }
                 
+                referrer_id = None
+                if referrer_code:
+                    cur.execute(
+                        "SELECT id FROM users WHERE referral_code = %s",
+                        (referrer_code,)
+                    )
+                    referrer = cur.fetchone()
+                    if referrer:
+                        referrer_id = referrer['id']
+                
                 cur.execute(
-                    "INSERT INTO users (email, password, full_name) VALUES (%s, %s, %s) RETURNING id, email, full_name, balance, referral_count",
-                    (email, hashed_pwd, full_name)
+                    "INSERT INTO users (email, password, full_name, referred_by) VALUES (%s, %s, %s, %s) RETURNING id, email, full_name, balance, referral_count",
+                    (email, hashed_pwd, full_name, referrer_id)
                 )
                 conn.commit()
                 user = cur.fetchone()
@@ -80,6 +91,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     "UPDATE users SET referral_code = %s WHERE id = %s",
                     (referral_code, user['id'])
                 )
+                
+                if referrer_id:
+                    cur.execute(
+                        "UPDATE users SET referral_count = referral_count + 1 WHERE id = %s",
+                        (referrer_id,)
+                    )
+                
                 conn.commit()
                 
                 user_data = {

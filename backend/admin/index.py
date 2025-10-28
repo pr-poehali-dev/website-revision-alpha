@@ -43,7 +43,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT id, email, full_name, balance, referral_count, created_at FROM users ORDER BY created_at DESC"
+                    """
+                    SELECT u.id, u.email, u.full_name, u.balance, u.referral_count, u.created_at,
+                           u.referral_code, r.full_name as referred_by_name
+                    FROM users u
+                    LEFT JOIN users r ON u.referred_by = r.id
+                    ORDER BY u.created_at DESC
+                    """
                 )
                 users = cur.fetchall()
                 
@@ -55,7 +61,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                         'full_name': user['full_name'],
                         'balance': float(user['balance']),
                         'referral_count': user['referral_count'],
-                        'created_at': user['created_at'].isoformat() if user['created_at'] else None
+                        'created_at': user['created_at'].isoformat() if user['created_at'] else None,
+                        'referral_code': user['referral_code'],
+                        'referred_by_name': user['referred_by_name']
                     })
                 
                 return {

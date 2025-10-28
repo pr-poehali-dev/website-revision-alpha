@@ -26,6 +26,7 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [paymentDetails, setPaymentDetails] = useState('');
+  const [referrerCode, setReferrerCode] = useState<string | null>(null);
   const { toast } = useToast();
 
   const [registerForm, setRegisterForm] = useState({
@@ -45,6 +46,22 @@ export default function Index() {
       setUser(JSON.parse(savedUser));
       setView('dashboard');
     }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const ref = urlParams.get('ref');
+    if (ref) {
+      setReferrerCode(ref);
+      localStorage.setItem('referrer_code', ref);
+      toast({
+        title: '🎉 Реферальная ссылка активирована!',
+        description: 'Регистрируйся и начни зарабатывать!'
+      });
+    } else {
+      const savedRef = localStorage.getItem('referrer_code');
+      if (savedRef) {
+        setReferrerCode(savedRef);
+      }
+    }
   }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -57,7 +74,8 @@ export default function Index() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'register',
-          ...registerForm
+          ...registerForm,
+          referrer_code: referrerCode
         })
       });
 
@@ -66,10 +84,11 @@ export default function Index() {
       if (data.success) {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.removeItem('referrer_code');
         setView('dashboard');
         toast({
           title: '✅ Регистрация успешна!',
-          description: 'Добро пожаловать в программу!'
+          description: referrerCode ? 'Регистрация по реферальной ссылке успешна!' : 'Добро пожаловать в программу!'
         });
       } else {
         toast({
@@ -328,9 +347,18 @@ export default function Index() {
               <Icon name="UserPlus" size={32} className="text-primary" />
               Регистрация
             </CardTitle>
-            <CardDescription>Создай аккаунт и начни зарабатывать</CardDescription>
+            <CardDescription>
+              {referrerCode ? '🎉 Регистрация по реферальной ссылке!' : 'Создай аккаунт и начни зарабатывать'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            {referrerCode && (
+              <div className="mb-4 p-3 bg-secondary/20 rounded-lg border-2 border-secondary/40">
+                <p className="text-sm font-semibold text-center">
+                  ✨ Вы регистрируетесь по приглашению!
+                </p>
+              </div>
+            )}
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="full_name">Полное имя</Label>
