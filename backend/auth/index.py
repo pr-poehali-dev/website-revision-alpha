@@ -75,12 +75,20 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 conn.commit()
                 user = cur.fetchone()
                 
+                referral_code = f"REF{user['id']:06d}"
+                cur.execute(
+                    "UPDATE users SET referral_code = %s WHERE id = %s",
+                    (referral_code, user['id'])
+                )
+                conn.commit()
+                
                 user_data = {
                     'id': user['id'],
                     'email': user['email'],
                     'full_name': user['full_name'],
                     'balance': float(user['balance']),
-                    'referral_count': user['referral_count']
+                    'referral_count': user['referral_count'],
+                    'referral_code': referral_code
                 }
                 
                 return {
@@ -108,7 +116,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
-                    "SELECT id, email, full_name, balance, referral_count FROM users WHERE email = %s AND password = %s",
+                    "SELECT id, email, full_name, balance, referral_count, referral_code FROM users WHERE email = %s AND password = %s",
                     (email, hashed_pwd)
                 )
                 user = cur.fetchone()
@@ -125,7 +133,8 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                     'email': user['email'],
                     'full_name': user['full_name'],
                     'balance': float(user['balance']),
-                    'referral_count': user['referral_count']
+                    'referral_count': user['referral_count'],
+                    'referral_code': user['referral_code'] or f"REF{user['id']:06d}"
                 }
                 
                 return {
