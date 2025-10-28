@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "name": "Update user balance",
+      "method": "POST",
+      "body": {
+        "action": "update_balance",
+        "password": "alfa2024admin",
+        "user_id": 1,
+        "amount": 500
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
